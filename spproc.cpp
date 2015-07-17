@@ -37,14 +37,17 @@ std::pair<sp_mat,sp_mat> spproc(mat coordList){
         xv2(find(xv2==uvI)).fill(i);
 
     }
+    cout << "M unique is : " << m_unique << "\n";
     // now x and y values are assured to be continious
     //step 2 generate sparse matricies
     // spmat needs our list transposed
-    //coordList = coordList.t();
-    umat locations = conv_to<umat>::from(coordList.rows(0,1));
-    sp_mat xMajor(locations,xv3,m_unique,m_unique,true,true);
+    umat locations = conv_to<umat>::from(join_rows(xv1,xv2));
+    locations = locations.t();
+    cout << "Locations : " << locations << "\n"; 
+    sp_mat xMajor(locations,xv3,m_unique,m_unique);
+    cout << "Got first! \n";
     locations.swap_rows(1,0);
-    sp_mat yMajor(locations,xv3,m_unique,m_unique,true,true);
+    sp_mat yMajor(locations,xv3,m_unique,m_unique);
 
 
     // step 3 package into a pair type

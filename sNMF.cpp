@@ -26,8 +26,8 @@ std::pair<sp_mat,sp_mat> sNMF(mat coordlist, int rank, float tol = 1e-5){
 	//Iteration cap; mostly for testing
 	int itmax = 1;
 
-    sp_mat W;
-    sp_mat H;
+    mat W;
+    mat H;
 
 	//run preprocessing
 
@@ -37,37 +37,31 @@ std::pair<sp_mat,sp_mat> sNMF(mat coordlist, int rank, float tol = 1e-5){
 
 
 	// get size to use
-	int xs = xMajor.n_rows;
-    int ys = yMajor.n_cols;
+    int xs = xMajor.n_rows;
 
 	// create initial W and H
-
 	//since V is positive, set W to 0 and H randomly
     // smallest nonzero start using eps (smallest float diff)
-    W.sprandu(rank,ys,0.1);
-    H.sprandu(rank,ys,0.1);
-
+    W.randu(xs,rank);
+    H.randu(rank,xs);
 	// okay, let's go 
 	float eucDist=1e9; //big initial value 
 	int itcount= 0;
-    float eta;
+        mat eta;
 	while ((eucDist>tol)&&(itcount<itmax)){
 	    // update H; sparse optimized
-        sp_mat WTranspose = W.t();	    
+        mat WTranspose = W.t();	    
         // TODO Fix this mess
-        mat tmpHdivisior = conv_to<mat>::from(WTranspose*W*H);
-        mat HNS = conv_to<mat>::from(H);
-        eta = conv_to<float>::from(HNS/tmpHdivisior);
-        cout << "got eta";
-	    H = H + eta * WTranspose*xMajor- WTranspose*W*H;
-	    // H stays positive for sure so long as initial guess for WH<V.
+        eta = (H/(WTranspose*W*H));
+	    H = H + eta %(xMajor*WTranspose- WTranspose*W*H);
+// H stays positive for sure so long as initial guess for WH<V.
 
 	    // update W (expensive as of now) TODO Fix this mess
-        mat tmpWdivisior = conv_to<mat>::from(W*H*H.t());
-        mat WNS = conv_to<mat>::from(xMajor*WTranspose);
-        W = conv_to<sp_mat>::from(WNS/tmpWdivisior);
+        mat tmpWdivisior = (W*H)*(H.t());
+        mat WNS =(W*xMajor);
+        W = (WNS/tmpWdivisior);
 	    // TODO, find better way to do WH
-	    sp_mat WH = W*H;
+	    mat WH = H*W;
         eucDist=sum(sum((WH-xMajor)%(WH-xMajor)));
 		itcount++;
 	    // maybe implement some sparse WH assurance update?
